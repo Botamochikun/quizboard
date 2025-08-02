@@ -5,28 +5,44 @@
 </head>
 <body>
   <h2>ホワイトボードに書いて送信</h2>
-  <form id="submitForm" method="POST" action="/submit">
-    名前: <input type="text" name="name" required><br><br>
+
+  <div id="nameInputDiv">
+    名前: <input type="text" id="nameInput" required>
+    <button id="saveNameBtn">保存</button>
+  </div>
+
+  <form id="submitForm" method="POST" action="/submit" style="display:none;">
+    <input type="hidden" name="name" id="formName">
     <canvas id="board" width="400" height="300" style="border:1px solid black;"></canvas><br><br>
     <input type="hidden" name="image" id="imageData">
     <button type="submit">送信</button>
   </form>
 
-  <h3>あなたの得点: <span id="score">0</span></h3>
+  <div>
+    <h3>あなたの得点: <span id="score">0</span></h3>
+    <button id="changeNameBtn" style="display:none;">名前を変更</button>
+  </div>
 
   <script>
+    const nameInputDiv = document.getElementById('nameInputDiv');
+    const nameInput = document.getElementById('nameInput');
+    const saveNameBtn = document.getElementById('saveNameBtn');
+    const submitForm = document.getElementById('submitForm');
+    const formName = document.getElementById('formName');
+    const changeNameBtn = document.getElementById('changeNameBtn');
+    const scoreSpan = document.getElementById('score');
+
     const canvas = document.getElementById("board");
     const ctx = canvas.getContext("2d");
     let drawing = false;
 
-    canvas.addEventListener("mousedown", () => drawing = true);
-    canvas.addEventListener("mouseup", () => {
+    function startDrawing(e) {
+      drawing = true;
+    }
+    function stopDrawing(e) {
       drawing = false;
       ctx.beginPath();
-    });
-    canvas.addEventListener("mouseout", () => drawing = false);
-    canvas.addEventListener("mousemove", draw);
-
+    }
     function draw(e) {
       if (!drawing) return;
       ctx.lineWidth = 2;
@@ -37,27 +53,74 @@
       ctx.beginPath();
       ctx.moveTo(e.offsetX, e.offsetY);
     }
+    canvas.addEventListener("mousedown", startDrawing);
+    canvas.addEventListener("mouseup", stopDrawing);
+    canvas.addEventListener("mouseout", stopDrawing);
+    canvas.addEventListener("mousemove", draw);
 
-    document.getElementById("submitForm").addEventListener("submit", function(e) {
+    // 名前保存ボタン押下時
+    saveNameBtn.onclick = () => {
+      const name = nameInput.value.trim();
+      if (!name) {
+        alert("名前を入力してください");
+        return;
+      }
+      localStorage.setItem('quizboard_name', name);
+      setupFormWithName(name);
+    };
+
+    // 名前変更ボタン押下時
+    changeNameBtn.onclick = () => {
+      localStorage.removeItem('quizboard_name');
+      scoreSpan.textContent = "0";
+      nameInputDiv.style.display = '';
+      submitForm.style.display = 'none';
+      changeNameBtn.style.display = 'none';
+    };
+
+    // フォーム送信時に画像データセット
+    submitForm.addEventListener("submit", function(e) {
       const dataURL = canvas.toDataURL();
       document.getElementById("imageData").value = dataURL;
     });
 
-    async function fetchScore() {
-      const nameInput = document.querySelector('input[name="name"]');
-      if (!nameInput) return;
-      const name = nameInput.value;
-      if (!name) return;
+    // 名前セットしてフォーム表示
+    function setupFormWithName(name) {
+      formName.value = name;
+      nameInputDiv.style.display = 'none';
+      submitForm.style.display = '';
+      changeNameBtn.style.display = '';
+      fetchScorePeriodically(name);
+    }
 
-      const res = await fetch('/score/' + encodeURIComponent(name));
-      if (res.ok) {
-        const data = await res.json();
-        document.getElementById('score').textContent = data.score;
+    // スコア取得関数
+    async function fetchScore(name) {
+      try {
+        const res = await fetch('/score/' + encodeURIComponent(name));
+        if (res.ok) {
+          const data = await res.json();
+          scoreSpan.textContent = data.score;
+        }
+      } catch (e) {
+        console.error("スコア取得失敗", e);
       }
     }
 
-    setInterval(fetchScore, 5000);
-    fetchScore();
+    // 5秒ごとにスコア更新
+    let scoreIntervalId = null;
+    function fetchScorePeriodically(name) {
+      if (scoreIntervalId) clearInterval(scoreIntervalId);
+      fetchScore(name);
+      scoreIntervalId = setInterval(() => fetchScore(name), 5000);
+    }
+
+    // ページロード時に名前が保存されていればフォーム表示
+    window.onload = () => {
+      const savedName = localStorage.getItem('quizboard_name');
+      if (savedName) {
+        setupFormWithName(savedName);
+      }
+    };
   </script>
 </body>
 </html>
