@@ -19,9 +19,11 @@ def host():
 
 @app.route('/submit', methods=['POST'])
 def submit():
-    name = request.form['name']
-    image = request.form['image']
-    print(f"Received image data (first 100 chars): {image[:100]}")
+    print("Submit endpoint hit")
+    name = request.form.get('name')
+    image = request.form.get('image')
+    print(f"Received name: {name}")
+    print(f"Received image data (start): {image[:30] if image else 'No image data'}")
     answers.append((name, image))
     return redirect('/player')
 
