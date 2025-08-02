@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template, request, redirect
 app = Flask(__name__)
 
@@ -28,4 +29,5 @@ def reset():
     return redirect('/host')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))  # Renderが指定するPORT環境変数を取得
+    app.run(host='0.0.0.0', port=port)
