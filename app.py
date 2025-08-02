@@ -3,8 +3,9 @@ from flask import Flask, render_template, request, redirect, jsonify
 
 app = Flask(__name__)
 
-# answersは辞書のリストに変更、scoreも持つ
-answers = []  # [{'name': ..., 'image': ..., 'score': 0}, ...]
+# [(name, image_base64, score)]
+answers = []
+confirmed_scores = {}  # リセット時に確定する点数を保存
 
 @app.route('/')
 def index():
@@ -20,34 +21,39 @@ def host():
 
 @app.route('/submit', methods=['POST'])
 def submit():
-    name = request.form.get('name')
-    image = request.form.get('image')
-    # 新規提出はスコア0で追加
-    answers.append({'name': name, 'image': image, 'score': 0})
+    name = request.form['name']
+    image = request.form['image']
+    # 新規はscore=0で登録。すでに名前があれば上書きしない簡易版
+    found = False
+    for i, (n, img, sc) in enumerate(answers):
+        if n == name:
+            answers[i] = (n, image, sc)  # 画像だけ上書き（score維持）
+            found = True
+            break
+    if not found:
+        answers.append((name, image, 0))
     return redirect('/player')
 
 @app.route('/score', methods=['POST'])
 def score():
-    data = request.get_json()
-    name = data.get('name')
-    is_correct = data.get('correct')
-    for a in answers:
-        if a['name'] == name:
-            a['score'] = 1 if is_correct else 0
+    name = request.form['name']
+    score = int(request.form['score'])
+    for i, (n, img, sc) in enumerate(answers):
+        if n == name:
+            answers[i] = (n, img, score)
             break
-    return jsonify(success=True)
-
-@app.route('/score/<name>')
-def get_score(name):
-    for a in answers:
-        if a['name'] == name:
-            return jsonify(score=a['score'])
-    return jsonify(score=0)
+    return '', 204
 
 @app.route('/reset')
 def reset():
+    global confirmed_scores
+    confirmed_scores = {name: score for name, _, score in answers}
     answers.clear()
     return redirect('/host')
+
+@app.route('/scores')
+def scores():
+    return jsonify(confirmed_scores)
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
