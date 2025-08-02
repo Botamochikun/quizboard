@@ -29,5 +29,5 @@ def reset():
     return redirect('/host')
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))  # Renderが指定するPORT環境変数を取得
-    app.run(host='0.0.0.0', port=port)
+    port = int(os.environ.get('PORT', 5000))  # Renderが指定するポート番号を取得
+    app.run(host='0.0.0.0', port=port)       # 0.0.0.0で外部接続を許可して起動
