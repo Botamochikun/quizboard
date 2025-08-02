@@ -5,14 +5,29 @@
 </head>
 <body>
   <h2>提出されたホワイトボード</h2>
-
-  {% for name, image in answers %}
-    <div style="margin-bottom: 20px;">
-      <p><strong>{{ name }}</strong></p>
-      <img src="{{ image }}" alt="回答画像" style="max-width: 300px; border: 1px solid #ccc;">
-    </div>
+  <ul>
+   {% for a in answers %}
+  <div style="margin-bottom:20px;">
+    <p><strong>{{ a.name }}</strong></p>
+    <img src="{{ a.image }}" alt="回答画像" style="max-width: 300px; border: 1px solid #ccc;">
+    <p>得点: {{ a.score }}</p>
+    <button onclick="updateScore('{{ a.name }}', true)">正解</button>
+    <button onclick="updateScore('{{ a.name }}', false)">不正解</button>
+  </div>
   {% endfor %}
-
+  </ul>
   <a href="/reset">リセット</a>
+
+  <script>
+    function updateScore(name, isCorrect) {
+      fetch('/score', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({name: name, correct: isCorrect})
+      }).then(res => {
+        if (res.ok) location.reload();
+      });
+    }
+  </script>
 </body>
 </html>

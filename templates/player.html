@@ -12,6 +12,8 @@
     <button type="submit">送信</button>
   </form>
 
+  <h3>あなたの得点: <span id="score">0</span></h3>
+
   <script>
     const canvas = document.getElementById("board");
     const ctx = canvas.getContext("2d");
@@ -40,6 +42,22 @@
       const dataURL = canvas.toDataURL();
       document.getElementById("imageData").value = dataURL;
     });
+
+    async function fetchScore() {
+      const nameInput = document.querySelector('input[name="name"]');
+      if (!nameInput) return;
+      const name = nameInput.value;
+      if (!name) return;
+
+      const res = await fetch('/score/' + encodeURIComponent(name));
+      if (res.ok) {
+        const data = await res.json();
+        document.getElementById('score').textContent = data.score;
+      }
+    }
+
+    setInterval(fetchScore, 5000);
+    fetchScore();
   </script>
 </body>
 </html>
