@@ -5,13 +5,14 @@
 </head>
 <body>
   <h2>提出されたホワイトボード</h2>
-  <ul>
-    {% for name, image in answers %}
-      <li><strong>{{ name }}</strong><br>
-        <img src="{{ image }}" width="400">
-      </li>
-    {% endfor %}
-  </ul>
+
+  {% for name, image in answers %}
+    <div style="margin-bottom: 20px;">
+      <p><strong>{{ name }}</strong></p>
+      <img src="{{ image }}" alt="回答画像" style="max-width: 300px; border: 1px solid #ccc;">
+    </div>
+  {% endfor %}
+
   <a href="/reset">リセット</a>
 </body>
 </html>

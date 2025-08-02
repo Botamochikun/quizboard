@@ -1,4 +1,5 @@
 import os
+
 from flask import Flask, render_template, request, redirect
 app = Flask(__name__)
 
@@ -20,14 +21,17 @@ def host():
 def submit():
     name = request.form['name']
     image = request.form['image']
+    print(f"Received image data (first 100 chars): {image[:100]}")
     answers.append((name, image))
     return redirect('/player')
+
 
 @app.route('/reset')
 def reset():
     answers.clear()
     return redirect('/host')
 
+
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))  # Renderが指定するポート番号を取得
-    app.run(host='0.0.0.0', port=port)       # 0.0.0.0で外部接続を許可して起動
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
